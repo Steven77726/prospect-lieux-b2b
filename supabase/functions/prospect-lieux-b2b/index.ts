@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
   const path = url.pathname.replace(/^\/functions\/v1\/prospect-lieux-b2b/, "") || "/";
 
   if (path === "/login" && req.method === "POST") return login(req);
+  if (path === "/api/admin/import" && req.method === "POST") return json(await importRows(await req.json()));
   if (!isAuthorized(req)) return loginPage();
 
   try {
@@ -98,7 +99,6 @@ async function api(req: Request, url: URL, path: string) {
   if (path === "/api/sync-test" && req.method === "POST") return json({ warning: "Test Overpass disponible sur la version locale.", newCount: 0 });
   if (path === "/api/export.csv" && req.method === "GET") return exportRows(url, "csv");
   if (path === "/api/export.xls" && req.method === "GET") return exportRows(url, "xls");
-  if (path === "/api/admin/import" && req.method === "POST") return json(await importRows(await req.json()));
 
   const detail = path.match(/^\/api\/venues\/(\d+)$/);
   if (detail && req.method === "GET") return json(await getVenue(Number(detail[1])));
