@@ -372,7 +372,7 @@ function renderRows() {
           <input type="checkbox" data-done-id="${venue.id}" ${venue.alreadyDone ? "checked" : ""} onchange="window.toggleAlreadyDone(${venue.id}, this.checked)" aria-label="Marquer ${escapeHtml(venue.name)} comme déjà fait" />
         </label>
       </td>
-      <td><img class="thumb" src="${photo(venue)}" alt=""></td>
+      <td>${googleBusinessLink(venue)}</td>
       <td><strong>${escapeHtml(venue.name)}</strong><small>${escapeHtml(venue.address)}</small></td>
       <td>${escapeHtml(venue.venueType)}</td>
       <td>${escapeHtml(venue.zone)}</td>
@@ -393,7 +393,7 @@ function renderRows() {
 function renderCards() {
   $("#cardView").innerHTML = state.venues.map((venue) => `
     <article class="venue-card ${venue.alreadyDone ? "already-done-row" : ""}" onclick="window.openVenue(${venue.id})">
-      <img src="${photo(venue)}" alt="">
+      ${googleBusinessLink(venue, "card")}
       <div>
         <div class="card-title"><strong>${escapeHtml(venue.name)}</strong>${pill(venue.kactusStatus)}</div>
         <p>${escapeHtml(venue.venueType)} - ${escapeHtml(venue.zone)} - ${venue.capacity || "?"} pers.</p>
@@ -604,6 +604,16 @@ function pill(value) {
 
 function photo(venue) {
   return venue.photos?.[0] || "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80";
+}
+
+function googleBusinessUrl(venue) {
+  if (venue.mapsUrl) return venue.mapsUrl;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address, venue.city].filter(Boolean).join(", "))}`;
+}
+
+function googleBusinessLink(venue, variant = "table") {
+  const label = variant === "card" ? "Google Business" : "Google";
+  return `<a class="google-business-link ${variant === "card" ? "card-map-link" : ""}" href="${escapeHtml(googleBusinessUrl(venue))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" aria-label="Ouvrir la fiche Google Business de ${escapeHtml(venue.name)}">${label}</a>`;
 }
 
 function kactusSearchUrl(venue) {

@@ -517,6 +517,35 @@ tbody tr.already-done-row:hover,
   object-fit: cover;
 }
 
+.google-business-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  min-height: 36px;
+  border: 1px solid rgba(10, 124, 255, 0.22);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: rgba(10, 124, 255, 0.08);
+  color: var(--blue);
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.google-business-link:hover,
+.google-business-link:focus-visible {
+  background: rgba(10, 124, 255, 0.14);
+  border-color: rgba(10, 124, 255, 0.38);
+}
+
+.card-map-link {
+  align-self: stretch;
+  min-height: 92px;
+  border-radius: 16px;
+}
+
 td strong,
 td small {
   display: block;
