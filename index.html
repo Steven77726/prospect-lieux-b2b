@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prospect Lieux B2B</title>
+    <meta name="description" content="CRM de prospection pour lieux evenementiels B2B a Paris et Boulogne-Billancourt." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">PL</div>
+          <div>
+            <strong>Prospect Lieux</strong>
+            <span>B2B Paris</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Navigation principale">
+          <button class="active" data-view="dashboard">Tableau de bord</button>
+          <button data-view="all">Tous les lieux</button>
+          <button data-view="prospects">Prospects certains</button>
+          <button data-view="kactusQueue">À vérifier Kactus</button>
+          <button data-view="new">Nouveaux lieux</button>
+          <button data-view="todo">A contacter</button>
+          <button data-view="followups">Relances</button>
+          <button data-view="interested">Interesses</button>
+          <button data-view="partners">Partenaires</button>
+          <button data-view="kactus">Presents sur Kactus</button>
+          <button data-view="settings">Parametres</button>
+        </nav>
+        <div class="sidebar-note">
+          <strong>Mode prudent</strong>
+          <span>Les lieux Kactus sont masques par defaut.</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">CRM de prospection</p>
+            <h1>Prospect Lieux B2B</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="switch">
+              <input id="autoSyncToggle" type="checkbox" />
+              <span>Hebdo</span>
+            </label>
+            <button id="manualButton" class="ghost-button">Ajouter un lieu</button>
+            <button id="syncButton" class="primary-button">Actualiser les lieux</button>
+            <button id="nextBatchButton" class="ghost-button hidden">Charger les 100 suivants</button>
+          </div>
+        </header>
+
+        <section id="syncBanner" class="sync-banner hidden" aria-live="polite"></section>
+        <section id="progressPanel" class="progress-panel" aria-live="polite"></section>
+
+        <section id="dashboard" class="dashboard-grid"></section>
+
+        <section class="workspace">
+          <div class="filters">
+            <div class="search-wrap">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Nom, adresse, telephone ou e-mail" />
+            </div>
+            <select id="cityFilter" aria-label="Ville">
+              <option value="">Paris + Boulogne</option>
+              <option>Paris</option>
+              <option>Boulogne-Billancourt</option>
+            </select>
+            <select id="arrondissementFilter" aria-label="Arrondissement">
+              <option value="">Arrondissement</option>
+            </select>
+            <select id="typeFilter" aria-label="Type de lieu">
+              <option value="">Type</option>
+            </select>
+            <input id="capacityFilter" type="number" min="0" step="10" placeholder="Capacite min." />
+            <select id="ownerFilter" aria-label="Responsable">
+              <option value="">Responsable</option>
+              <option>Steven</option>
+              <option>Gabriel</option>
+            </select>
+            <select id="statusFilter" aria-label="Statut commercial">
+              <option value="">Statut</option>
+            </select>
+            <select id="contactedFilter" aria-label="Prise de contact">
+              <option value="">Contact</option>
+              <option>Oui</option>
+              <option>Non</option>
+            </select>
+            <select id="interestedFilter" aria-label="Interesse">
+              <option value="">Interesse</option>
+              <option>Oui</option>
+              <option>Non</option>
+              <option>A verifier</option>
+            </select>
+            <select id="followUpFilter" aria-label="Relances">
+              <option value="">Relances</option>
+              <option value="today">Aujourd'hui</option>
+              <option value="late">En retard</option>
+            </select>
+            <select id="doneFilter" aria-label="Déjà fait">
+              <option value="">Tous</option>
+              <option value="done">Déjà faits</option>
+              <option value="todo">Pas encore faits</option>
+            </select>
+            <input id="ratingFilter" type="number" min="0" max="5" step="0.1" placeholder="Note min." />
+            <label class="check-filter"><input id="absentKactusOnly" type="checkbox" /> Absent Kactus</label>
+            <label class="check-filter"><input id="kactusQueueOnly" type="checkbox" /> À vérifier Kactus</label>
+            <label class="check-filter"><input id="includeKactus" type="checkbox" /> Voir Kactus</label>
+          </div>
+
+          <div class="list-toolbar">
+            <div>
+              <strong id="resultCount">0 lieu</strong>
+              <span id="viewHint">Base de prospection</span>
+            </div>
+            <div class="segmented" aria-label="Mode d'affichage">
+              <button id="tableViewButton" class="active">Tableau</button>
+              <button id="cardViewButton">Cartes</button>
+            </div>
+            <a id="csvExport" class="ghost-button" href="/api/export.csv">CSV</a>
+            <a id="xlsExport" class="ghost-button" href="/api/export.xls">Excel</a>
+            <button id="clearFilterButton" class="ghost-button hidden">Retirer le filtre</button>
+          </div>
+
+          <div id="tableView" class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Déjà fait</th>
+                  <th>Photo</th>
+                  <th>Lieu</th>
+                  <th>Type</th>
+                  <th>Zone</th>
+                  <th>Telephone</th>
+                  <th>Cap.</th>
+                  <th>Priv.</th>
+                  <th>Kactus</th>
+                  <th>Contact</th>
+                  <th>Resp.</th>
+                  <th>Interesse</th>
+                  <th>Relance</th>
+                  <th>Statut</th>
+                  <th>Commentaire</th>
+                </tr>
+              </thead>
+              <tbody id="venueRows"></tbody>
+            </table>
+          </div>
+          <div id="cardView" class="card-grid hidden"></div>
+          <div class="pagination">
+            <button id="prevPage">Precedent</button>
+            <span id="pageLabel">Page 1</span>
+            <button id="nextPage">Suivant</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="venueDialog" class="venue-dialog">
+      <div id="venueDetail"></div>
+    </dialog>
+
+    <dialog id="manualDialog" class="form-dialog">
+      <form id="manualForm" class="dialog-form">
+        <div class="dialog-head">
+          <h2>Ajouter un lieu</h2>
+          <button type="button" class="close-button-static" data-close="manualDialog">Fermer</button>
+        </div>
+        <label>Nom du lieu<input name="name" required /></label>
+        <label>Type<input name="venueType" placeholder="Restaurant privatisable, rooftop..." /></label>
+        <label>Adresse<input name="address" /></label>
+        <label>Ville
+          <select name="city">
+            <option>Paris</option>
+            <option>Boulogne-Billancourt</option>
+          </select>
+        </label>
+        <label>Arrondissement<input name="arrondissement" placeholder="8e" /></label>
+        <label>Telephone<input name="phone" /></label>
+        <label>Site Internet<input name="website" type="url" /></label>
+        <label>Lien Google Maps<input name="mapsUrl" type="url" /></label>
+        <label>Capacite<input name="capacity" type="number" min="0" /></label>
+        <label>Statut Kactus
+          <select name="kactusStatus">
+            <option>Presence incertaine</option>
+            <option>Absent de Kactus</option>
+            <option>Present sur Kactus</option>
+          </select>
+        </label>
+        <label>Responsable
+          <select name="responsible">
+            <option>Steven</option>
+            <option>Gabriel</option>
+          </select>
+        </label>
+        <label class="wide">Commentaire<textarea name="comment"></textarea></label>
+        <button class="primary-button wide" type="submit">Ajouter</button>
+      </form>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
