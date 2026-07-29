@@ -11,7 +11,10 @@ const state = {
 
 const API_BASE = location.pathname.includes("/functions/v1/prospect-lieux-b2b")
   ? "/functions/v1/prospect-lieux-b2b"
+  : location.hostname.endsWith("github.io")
+    ? "https://lsczptxjhiadoskvklvj.supabase.co/functions/v1/prospect-lieux-b2b"
   : "";
+const PASSWORD_KEY = "prospect-lieux-b2b-password";
 
 const dashboardFilters = {
   total: { label: "Tous les lieux", params: { includeKactus: "true" } },
@@ -67,6 +70,7 @@ const $ = (selector) => document.querySelector(selector);
 init();
 
 function init() {
+  ensureOnlinePassword();
   fillSelect("#arrondissementFilter", Array.from({ length: 20 }, (_, i) => `${i + 1}e`));
   fillSelect("#typeFilter", venueTypes);
   fillSelect("#statusFilter", statuses);
@@ -560,13 +564,24 @@ function renderProgress(progress, archives = [], totalVenues = 0) {
 }
 
 async function api(url, options = {}) {
-  const response = await fetch(`${API_BASE}${url}`, { headers: { "Content-Type": "application/json" }, ...options });
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const password = localStorage.getItem(PASSWORD_KEY);
+  if (API_BASE.includes("supabase.co") && password) headers["x-prospect-password"] = password;
+  const response = await fetch(`${API_BASE}${url}`, { ...options, headers });
   if (response.status === 401) {
-    window.location.reload();
+    localStorage.removeItem(PASSWORD_KEY);
+    ensureOnlinePassword(true);
     throw new Error("Session expiree");
   }
   if (!response.ok) throw new Error((await response.json()).error || "Erreur API");
   return response.json();
+}
+
+function ensureOnlinePassword(force = false) {
+  if (!API_BASE.includes("supabase.co")) return;
+  if (!force && localStorage.getItem(PASSWORD_KEY)) return;
+  const password = window.prompt("Mot de passe Prospect Lieux B2B");
+  if (password) localStorage.setItem(PASSWORD_KEY, password);
 }
 
 function fillSelect(selector, values) {

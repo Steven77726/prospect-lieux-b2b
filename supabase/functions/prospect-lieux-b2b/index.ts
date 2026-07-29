@@ -14,8 +14,10 @@ Deno.serve(async (req) => {
     .replace(/^\/functions\/v1\/prospect-lieux-b2b/, "")
     .replace(/^\/prospect-lieux-b2b/, "") || "/";
 
+  if (req.method === "OPTIONS") return new Response("ok", { headers: responseHeaders("text/plain") });
   if (path === "/login" && req.method === "POST") return login(req);
-  if (!isAuthorized(req)) return loginPage();
+  if (path.startsWith("/api/") && !isAuthorized(req) && !hasPasswordHeader(req)) return json({ error: "Mot de passe requis" }, 401);
+  if (!isAuthorized(req) && !(path.startsWith("/api/") && hasPasswordHeader(req))) return loginPage();
 
   try {
     if (path === "/" && req.method === "GET") return home();
@@ -43,6 +45,10 @@ async function login(req: Request) {
 
 function isAuthorized(req: Request) {
   return (req.headers.get("cookie") || "").includes(`${COOKIE_NAME}=${COOKIE_VALUE}`);
+}
+
+function hasPasswordHeader(req: Request) {
+  return req.headers.get("x-prospect-password") === PASSWORD;
 }
 
 function loginPage(error = "") {
@@ -407,11 +413,21 @@ function restHeaders() {
 }
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
+  return new Response(JSON.stringify(body), { status, headers: responseHeaders("application/json; charset=utf-8") });
 }
 
 function html(body: string) {
-  return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+  return new Response(body, { headers: responseHeaders("text/html; charset=utf-8") });
+}
+
+function responseHeaders(contentType: string) {
+  return {
+    "content-type": contentType,
+    "connection": "keep-alive",
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET,POST,PATCH,OPTIONS",
+    "access-control-allow-headers": "content-type,x-prospect-password"
+  };
 }
 
 function isDueToday(value = "") {
