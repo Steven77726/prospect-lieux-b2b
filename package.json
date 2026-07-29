@@ -1,0 +1,15 @@
+{
+  "name": "prospect-lieux-b2b",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CRM de prospection B2B pour lieux evenementiels a Paris et Boulogne-Billancourt.",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
