@@ -9,6 +9,10 @@ const state = {
   activeFilterLabel: "Base de prospection"
 };
 
+const API_BASE = location.pathname.includes("/functions/v1/prospect-lieux-b2b")
+  ? "/functions/v1/prospect-lieux-b2b"
+  : "";
+
 const dashboardFilters = {
   total: { label: "Tous les lieux", params: { includeKactus: "true" } },
   new: { label: "Nouveaux", params: { includeKactus: "true", status: "Nouveau" } },
@@ -223,8 +227,8 @@ async function loadVenues() {
   $("#pageLabel").textContent = `Page ${state.page}`;
   $("#prevPage").disabled = state.page === 1;
   $("#nextPage").disabled = state.page * state.pageSize >= state.total;
-  $("#csvExport").href = `/api/export.csv?${query}`;
-  $("#xlsExport").href = `/api/export.xls?${query}`;
+  $("#csvExport").href = `${API_BASE}/api/export.csv?${query}`;
+  $("#xlsExport").href = `${API_BASE}/api/export.xls?${query}`;
   renderRows();
   renderCards();
 }
@@ -556,7 +560,11 @@ function renderProgress(progress, archives = [], totalVenues = 0) {
 }
 
 async function api(url, options = {}) {
-  const response = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
+  const response = await fetch(`${API_BASE}${url}`, { headers: { "Content-Type": "application/json" }, ...options });
+  if (response.status === 401) {
+    window.location.reload();
+    throw new Error("Session expiree");
+  }
   if (!response.ok) throw new Error((await response.json()).error || "Erreur API");
   return response.json();
 }
