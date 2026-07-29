@@ -330,7 +330,7 @@ function buildVenueWhere(url) {
   if (url.searchParams.get("kactusQueue") === "true") {
     clauses.push("v.kactus_status = 'Presence incertaine'");
   } else if (url.searchParams.get("includeKactus") !== "true") {
-    clauses.push("v.kactus_status = 'Absent de Kactus'");
+    clauses.push("v.kactus_status != 'Present sur Kactus'");
   }
   const filters = {
     city: "v.city",

@@ -16,15 +16,15 @@ const API_BASE = location.pathname.includes("/functions/v1/prospect-lieux-b2b")
   : "";
 
 const dashboardFilters = {
-  total: { label: "Tous les lieux", params: { includeKactus: "true" } },
-  new: { label: "Nouveaux", params: { includeKactus: "true", status: "Nouveau" } },
+  total: { label: "Lieux à vérifier", params: { includeKactus: "true", kactusQueue: "true" } },
+  new: { label: "Nouveaux à vérifier", params: { includeKactus: "true", kactusQueue: "true", status: "Nouveau" } },
   absentKactus: { label: "Absents Kactus", params: { includeKactus: "true", absentKactusOnly: "true" } },
-  neverContacted: { label: "Jamais contactés", params: { includeKactus: "true", contacted: "Non" } },
-  contacted: { label: "Contactés", params: { includeKactus: "true", contacted: "Oui" } },
-  interested: { label: "Intéressés", params: { includeKactus: "true", status: "Interesse" } },
-  partners: { label: "Partenaires", params: { includeKactus: "true", status: "Partenaire" } },
-  refused: { label: "Refus", params: { includeKactus: "true", status: "Refuse" } },
-  dueToday: { label: "Relances du jour", params: { includeKactus: "true", followUp: "today" } }
+  neverContacted: { label: "Jamais contactés à vérifier", params: { includeKactus: "true", kactusQueue: "true", contacted: "Non" } },
+  contacted: { label: "Contactés à vérifier", params: { includeKactus: "true", kactusQueue: "true", contacted: "Oui" } },
+  interested: { label: "Intéressés à vérifier", params: { includeKactus: "true", kactusQueue: "true", status: "Interesse" } },
+  partners: { label: "Partenaires à vérifier", params: { includeKactus: "true", kactusQueue: "true", status: "Partenaire" } },
+  refused: { label: "Refus à vérifier", params: { includeKactus: "true", kactusQueue: "true", status: "Refuse" } },
+  dueToday: { label: "Relances du jour à vérifier", params: { includeKactus: "true", kactusQueue: "true", followUp: "today" } }
 };
 
 const statuses = [
@@ -179,16 +179,28 @@ function setLayout(layout) {
 
 async function loadDashboard() {
   const data = await api("/api/dashboard");
+  const present = await api("/api/venues?includeKactus=true&kactusStatus=Present sur Kactus&pageSize=100");
+  const visibleStats = {
+    total: Math.max(0, (data.stats.total || 0) - present.total),
+    newVenues: Math.max(0, (data.stats.newVenues || 0) - present.items.filter((venue) => venue.commercial.status === "Nouveau").length),
+    absentKactus: data.stats.absentKactus || 0,
+    neverContacted: Math.max(0, (data.stats.neverContacted || 0) - present.items.filter((venue) => venue.commercial.contacted === "Non").length),
+    contacted: Math.max(0, (data.stats.contacted || 0) - present.items.filter((venue) => venue.commercial.contacted === "Oui").length),
+    interested: data.stats.interested || 0,
+    partners: data.stats.partners || 0,
+    refused: data.stats.refused || 0,
+    dueToday: data.stats.dueToday || 0
+  };
   const cards = [
-    ["total", "Total", data.stats.total || 0],
-    ["new", "Nouveaux", data.stats.newVenues || 0],
-    ["absentKactus", "Absents Kactus", data.stats.absentKactus || 0],
-    ["neverContacted", "Jamais contactes", data.stats.neverContacted || 0],
-    ["contacted", "Contactes", data.stats.contacted || 0],
-    ["interested", "Interesses", data.stats.interested || 0],
-    ["partners", "Partenaires", data.stats.partners || 0],
-    ["refused", "Refus", data.stats.refused || 0],
-    ["dueToday", "Relances du jour", data.stats.dueToday || 0]
+    ["total", "Total", visibleStats.total],
+    ["new", "Nouveaux", visibleStats.newVenues],
+    ["absentKactus", "Absents Kactus", visibleStats.absentKactus],
+    ["neverContacted", "Jamais contactes", visibleStats.neverContacted],
+    ["contacted", "Contactes", visibleStats.contacted],
+    ["interested", "Interesses", visibleStats.interested],
+    ["partners", "Partenaires", visibleStats.partners],
+    ["refused", "Refus", visibleStats.refused],
+    ["dueToday", "Relances du jour", visibleStats.dueToday]
   ];
   $("#dashboard").innerHTML = `
     <div class="stat-grid">${cards.map(([key, label, value]) => `<button class="stat-card" type="button" data-filter="${key}" aria-label="Afficher ${escapeHtml(value)} lieux - ${escapeHtml(label)}"><span>${label}</span><strong>${value}</strong></button>`).join("")}</div>
@@ -245,7 +257,8 @@ function applyUrlFilter() {
   applyParamsToControls(params);
   if (!window.location.search) {
     $("#includeKactus").checked = true;
-    state.activeFilterLabel = "Tous les lieux";
+    $("#kactusQueueOnly").checked = true;
+    state.activeFilterLabel = "À vérifier sur Kactus";
     return;
   }
   state.activeFilterLabel = params.get("label") || "Base de prospection";
@@ -272,7 +285,8 @@ function applyDashboardFilter(filterKey, pushUrl) {
 function clearDashboardFilter() {
   resetFilters();
   $("#includeKactus").checked = true;
-  state.activeFilterLabel = "Tous les lieux";
+  $("#kactusQueueOnly").checked = true;
+  state.activeFilterLabel = "À vérifier sur Kactus";
   state.page = 1;
   history.pushState({}, "", window.location.pathname);
   setView("all");

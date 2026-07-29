@@ -277,7 +277,7 @@ async function allVenues() {
 function filterVenues(venues: ReturnType<typeof mapVenue>[], url: URL) {
   let items = venues;
   if (url.searchParams.get("kactusQueue") === "true") items = items.filter((v) => v.kactusStatus === "Presence incertaine");
-  else if (url.searchParams.get("includeKactus") !== "true") items = items.filter((v) => v.kactusStatus === "Absent de Kactus");
+  else if (url.searchParams.get("includeKactus") !== "true") items = items.filter((v) => v.kactusStatus !== "Present sur Kactus");
   const eqFilters: [string, (v: ReturnType<typeof mapVenue>) => string][] = [
     ["city", (v) => v.city],
     ["arrondissement", (v) => v.arrondissement],
