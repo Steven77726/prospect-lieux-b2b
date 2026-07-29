@@ -243,6 +243,11 @@ function applyUrlFilter() {
     return;
   }
   applyParamsToControls(params);
+  if (!window.location.search) {
+    $("#includeKactus").checked = true;
+    state.activeFilterLabel = "Tous les lieux";
+    return;
+  }
   state.activeFilterLabel = params.get("label") || "Base de prospection";
 }
 
@@ -266,7 +271,8 @@ function applyDashboardFilter(filterKey, pushUrl) {
 
 function clearDashboardFilter() {
   resetFilters();
-  state.activeFilterLabel = "Base de prospection";
+  $("#includeKactus").checked = true;
+  state.activeFilterLabel = "Tous les lieux";
   state.page = 1;
   history.pushState({}, "", window.location.pathname);
   setView("all");
