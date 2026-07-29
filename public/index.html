@@ -48,7 +48,6 @@
               <span>Hebdo</span>
             </label>
             <button id="manualButton" class="ghost-button">Ajouter un lieu</button>
-            <button id="importButton" class="ghost-button">Importer CSV</button>
             <button id="syncButton" class="primary-button">Actualiser les lieux</button>
             <button id="nextBatchButton" class="ghost-button hidden">Charger les 100 suivants</button>
           </div>
@@ -199,18 +198,6 @@
         </label>
         <label class="wide">Commentaire<textarea name="comment"></textarea></label>
         <button class="primary-button wide" type="submit">Ajouter</button>
-      </form>
-    </dialog>
-
-    <dialog id="importDialog" class="form-dialog">
-      <form id="importForm" class="dialog-form">
-        <div class="dialog-head">
-          <h2>Importer CSV</h2>
-          <button type="button" class="close-button-static" data-close="importDialog">Fermer</button>
-        </div>
-        <label class="wide">Fichier CSV<input id="csvFile" type="file" accept=".csv,text/csv" /></label>
-        <label class="wide">Ou coller le CSV<textarea id="csvText" placeholder="name,address,phone,website,kactus_status"></textarea></label>
-        <button class="primary-button wide" type="submit">Importer sans ecraser le commercial</button>
       </form>
     </dialog>
 

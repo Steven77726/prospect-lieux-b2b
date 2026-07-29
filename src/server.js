@@ -46,7 +46,6 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname.startsWith("/api/venues/")) return getVenue(res, url.pathname);
   if (req.method === "PATCH" && url.pathname.startsWith("/api/venues/")) return updateCommercial(req, res, url.pathname);
   if (req.method === "PATCH" && url.pathname.startsWith("/api/public-venue/")) return updatePublicVenue(req, res, url.pathname);
-  if (req.method === "POST" && url.pathname === "/api/import.csv") return importCsv(req, res);
   if (req.method === "POST" && url.pathname === "/api/sync") return syncNow(req, res, url);
   if (req.method === "POST" && url.pathname === "/api/sync-test") return syncTest(res);
   if (req.method === "GET" && url.pathname === "/api/sync-progress") return syncProgress(res);
@@ -247,23 +246,6 @@ async function createManualVenue(req, res) {
     }
   }, { isDemo: false, userName: body.userName || "Steven" });
   sendJson(res, 201, { id: result.id, action: result.action });
-}
-
-async function importCsv(req, res) {
-  const body = await readJson(req);
-  const rows = parseCsv(String(body.csv || ""));
-  if (!rows.length) return sendJson(res, 400, { error: "Aucune ligne CSV lisible" });
-
-  let inserted = 0;
-  let updated = 0;
-  for (const row of rows) {
-    const venue = csvRowToVenue(row);
-    if (!venue.name) continue;
-    const result = upsertVenue(venue, { isDemo: false, userName: body.userName || "Steven" });
-    if (result.action === "inserted") inserted += 1;
-    if (result.action === "updated") updated += 1;
-  }
-  sendJson(res, 200, { inserted, updated, commercialOverwriteCount: 0 });
 }
 
 async function syncNow(req, res, url) {
@@ -563,76 +545,6 @@ async function readJson(req) {
 function csvCell(value) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
-
-function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let quoted = false;
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const next = text[index + 1];
-    if (char === '"' && quoted && next === '"') {
-      cell += '"';
-      index += 1;
-    } else if (char === '"') {
-      quoted = !quoted;
-    } else if (char === "," && !quoted) {
-      row.push(cell);
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !quoted) {
-      if (char === "\r" && next === "\n") index += 1;
-      row.push(cell);
-      if (row.some((value) => value.trim())) rows.push(row);
-      row = [];
-      cell = "";
-    } else {
-      cell += char;
-    }
-  }
-  row.push(cell);
-  if (row.some((value) => value.trim())) rows.push(row);
-  const headers = rows.shift()?.map((header) => normalizeHeader(header)) || [];
-  return rows.map((values) => Object.fromEntries(headers.map((header, index) => [header, values[index] || ""])));
-}
-
-function normalizeHeader(value) {
-  return String(value || "")
-    .replace(/^\uFEFF/, "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
-function csvRowToVenue(row) {
-  const name = row.name || row.nom || row.lieu || row.nom_du_lieu || "";
-  const address = row.address || row.adresse || "";
-  return {
-    name,
-    venueType: row.venue_type || row.type || row.type_de_lieu || "Lieu atypique",
-    address,
-    city: row.city || row.ville || "",
-    arrondissement: row.arrondissement || "",
-    zone: row.zone || "",
-    phone: row.phone || row.telephone || "",
-    website: row.website || row.site || row.site_internet || "",
-    mapsUrl: row.maps_url || row.lien_google_maps || googleMapsSearchUrl(name, address),
-    capacity: row.capacity || row.capacite || null,
-    privateHire: row.private_hire || row.privatisable || "A verifier",
-    kactusStatus: row.kactus_status || row.statut_kactus || "Presence incertaine",
-    source: "Import CSV",
-    commercial: {
-      responsible: row.responsible || row.responsable || "Steven",
-      status: row.status || row.statut || row.statut_commercial || "Nouveau",
-      comment: row.comment || row.commentaire || "",
-      contacted: row.contacted || row.contact || "Non",
-      interested: row.interested || row.interesse || "A verifier",
-      directEmail: row.direct_email || row.email || row.e_mail || ""
-    }
-  };
 }
 
 function googleMapsSearchUrl(name, address = "") {

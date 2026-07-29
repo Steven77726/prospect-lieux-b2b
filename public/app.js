@@ -102,9 +102,7 @@ function bindEvents() {
   $("#nextBatchButton").addEventListener("click", syncNow);
   $("#clearFilterButton").addEventListener("click", clearDashboardFilter);
   $("#manualButton").addEventListener("click", () => $("#manualDialog").showModal());
-  $("#importButton").addEventListener("click", () => $("#importDialog").showModal());
   $("#manualForm").addEventListener("submit", createManualVenue);
-  $("#importForm").addEventListener("submit", importCsv);
   document.querySelectorAll("[data-close]").forEach((button) => {
     button.addEventListener("click", () => $(`#${button.dataset.close}`).close());
   });
@@ -502,19 +500,6 @@ async function createManualVenue(event) {
   $("#manualDialog").close();
   event.currentTarget.reset();
   showBanner(result.action === "inserted" ? "Lieu ajoute manuellement." : "Lieu deja present, donnees publiques actualisees.");
-  await loadDashboard();
-  await loadVenues();
-}
-
-async function importCsv(event) {
-  event.preventDefault();
-  const file = $("#csvFile").files[0];
-  const csv = file ? await file.text() : $("#csvText").value;
-  const summary = await api("/api/import.csv", { method: "POST", body: JSON.stringify({ csv }) });
-  $("#importDialog").close();
-  event.currentTarget.reset();
-  $("#csvText").value = "";
-  showBanner(`${summary.inserted} lieux importes - ${summary.updated} actualises - 0 donnee commerciale ecrasee.`);
   await loadDashboard();
   await loadVenues();
 }

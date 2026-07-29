@@ -16,7 +16,6 @@ Ouvrir ensuite `http://localhost:4317`.
 - Actualisation gratuite via OpenStreetMap / Overpass API, limitee a 20 lieux.
 - Recherche ciblee sur salles, restaurants, auditoriums, hotels, salles de reunion, lofts, rooftops et espaces evenementiels.
 - Anti-doublon conserve par identifiant externe OSM, telephone, nom normalise et adresse normalisee.
-- Import CSV depuis l'interface.
 - Ajout manuel d'un lieu depuis l'interface.
 - Champ `Lien Google Maps`.
 - Champ `Statut Kactus` a verifier manuellement.
@@ -60,6 +59,23 @@ Pour travailler depuis deux postes avec les memes donnees, utiliser une seule in
 Important: le fichier SQLite est ignore par Git pour ne pas publier les donnees commerciales.
 
 Supabase: le projet doit etre actif avant migration. Les tables exposees via API doivent utiliser RLS et des droits explicites.
+
+### Preparation Supabase
+
+Le dossier `supabase/migrations` contient le schema Postgres pret pour Supabase.
+
+Quand le projet Supabase est actif:
+
+1. Appliquer `supabase/migrations/0001_initial_schema.sql`.
+2. Exporter les donnees SQLite:
+
+```bash
+npm run export:supabase
+```
+
+3. Importer le fichier genere `supabase/seed-from-sqlite.sql` dans Supabase.
+
+Ne jamais publier `.env` ni `data/*.sqlite` sur GitHub.
 
 ## Limites de cette V1
 
