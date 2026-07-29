@@ -1,10 +1,4 @@
 // @ts-nocheck
-const PASSWORD = "prospect2026";
-const COOKIE_NAME = "plb2b_auth";
-const COOKIE_VALUE = "ok-prospect2026";
-const GITHUB_RAW = "https://raw.githubusercontent.com/Steven77726/prospect-lieux-b2b/main/public";
-const GITHUB_CDN = "https://cdn.jsdelivr.net/gh/Steven77726/prospect-lieux-b2b@main/public";
-
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
@@ -15,86 +9,14 @@ Deno.serve(async (req) => {
     .replace(/^\/prospect-lieux-b2b/, "") || "/";
 
   if (req.method === "OPTIONS") return new Response("ok", { headers: responseHeaders("text/plain") });
-  if (path === "/login" && req.method === "POST") return login(req);
-  if (path.startsWith("/api/") && !isAuthorized(req) && !hasPasswordHeader(req)) return json({ error: "Mot de passe requis" }, 401);
-  if (!isAuthorized(req) && !(path.startsWith("/api/") && hasPasswordHeader(req))) return loginPage();
 
   try {
-    if (path === "/" && req.method === "GET") return home();
     if (path.startsWith("/api/")) return api(req, url, path);
-    return json({ error: "Route introuvable" }, 404);
+    return json({ ok: true, message: "API Prospect Lieux B2B" });
   } catch (error) {
     return json({ error: error?.message || "Erreur serveur" }, 500);
   }
 });
-
-async function login(req: Request) {
-  const contentType = req.headers.get("content-type") || "";
-  const body = contentType.includes("application/json")
-    ? await req.json().catch(() => ({}))
-    : Object.fromEntries((await req.formData()).entries());
-  if (String(body.password || "") !== PASSWORD) return loginPage("Mot de passe incorrect");
-  return new Response(null, {
-    status: 303,
-    headers: {
-      "Location": "/functions/v1/prospect-lieux-b2b/",
-      "Set-Cookie": `${COOKIE_NAME}=${COOKIE_VALUE}; Path=/functions/v1/prospect-lieux-b2b; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
-    }
-  });
-}
-
-function isAuthorized(req: Request) {
-  return (req.headers.get("cookie") || "").includes(`${COOKIE_NAME}=${COOKIE_VALUE}`);
-}
-
-function hasPasswordHeader(req: Request) {
-  return req.headers.get("x-prospect-password") === PASSWORD;
-}
-
-function loginPage(error = "") {
-  return html(`<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Prospect Lieux B2B</title>
-    <style>
-      body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Inter,Arial,sans-serif;background:#f6f7fb;color:#172033}
-      form{width:min(380px,calc(100vw - 32px));display:grid;gap:14px;padding:28px;border:1px solid #dde2ea;border-radius:24px;background:white;box-shadow:0 24px 70px rgba(25,35,55,.12)}
-      h1{margin:0;font-size:1.5rem} input,button{min-height:44px;border-radius:14px;border:1px solid #d8dee8;padding:0 12px;font:inherit}
-      button{border:0;background:#0a7cff;color:white;font-weight:800;cursor:pointer}.error{color:#b42318;font-weight:700}
-    </style>
-  </head>
-  <body>
-    <form method="post" action="/functions/v1/prospect-lieux-b2b/login">
-      <h1>Prospect Lieux B2B</h1>
-      ${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}
-      <input name="password" type="password" placeholder="Mot de passe" autofocus />
-      <button type="submit">Entrer</button>
-    </form>
-    <script>
-      document.querySelector("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const password = document.querySelector("input").value;
-        const response = await fetch("/functions/v1/prospect-lieux-b2b/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password })
-        });
-        if (response.redirected) location.href = response.url;
-        else location.reload();
-      });
-    </script>
-  </body>
-</html>`);
-}
-
-async function home() {
-  const source = await fetch(`${GITHUB_RAW}/index.html`).then((res) => res.text());
-  return html(source
-    .replace('href="/styles.css"', `href="${GITHUB_CDN}/styles.css"`)
-    .replace('src="/app.js"', `src="${GITHUB_CDN}/app.js"`));
-}
 
 async function api(req: Request, url: URL, path: string) {
   if (path === "/api/dashboard" && req.method === "GET") return json(await dashboard());
@@ -426,7 +348,7 @@ function responseHeaders(contentType: string) {
     "connection": "keep-alive",
     "access-control-allow-origin": "*",
     "access-control-allow-methods": "GET,POST,PATCH,OPTIONS",
-    "access-control-allow-headers": "content-type,x-prospect-password"
+    "access-control-allow-headers": "content-type"
   };
 }
 
