@@ -20,12 +20,24 @@ const lines = [
   "set session_replication_role = replica;"
 ];
 
+const booleanColumns = new Set(["is_demo", "already_done", "initial_completed"]);
+const nullableTimestampColumns = new Set([
+  "created_at",
+  "updated_at",
+  "started_at",
+  "finished_at",
+  "last_sync_at",
+  "last_checked_at",
+  "kactus_verified_at",
+  "kactus_validated_at"
+]);
+
 for (const table of tables) {
   const rows = db.prepare(`select * from ${table}`).all();
   if (!rows.length) continue;
   const columns = Object.keys(rows[0]);
   for (const row of rows) {
-    lines.push(`insert into public.${table} (${columns.map(quoteIdentifier).join(", ")}) values (${columns.map((column) => sqlValue(row[column])).join(", ")}) on conflict do nothing;`);
+    lines.push(`insert into public.${table} (${columns.map(quoteIdentifier).join(", ")}) values (${columns.map((column) => sqlValue(row[column], column)).join(", ")}) on conflict do nothing;`);
   }
 }
 
@@ -42,8 +54,10 @@ function quoteIdentifier(value) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
-function sqlValue(value) {
+function sqlValue(value, column) {
   if (value === null || value === undefined) return "null";
+  if (booleanColumns.has(column)) return value ? "true" : "false";
+  if (nullableTimestampColumns.has(column) && value === "") return "null";
   if (typeof value === "number") return Number.isFinite(value) ? String(value) : "null";
   return `'${String(value).replace(/'/g, "''")}'`;
 }

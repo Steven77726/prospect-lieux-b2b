@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
   const path = url.pathname.replace(/^\/functions\/v1\/prospect-lieux-b2b/, "") || "/";
 
   if (path === "/login" && req.method === "POST") return login(req);
-  if (path === "/api/admin/import" && req.method === "POST") return json(await importRows(await req.json()));
   if (!isAuthorized(req)) return loginPage();
 
   try {
@@ -280,22 +279,6 @@ async function exportRows(url: URL, format: "csv" | "xls") {
   }
   const csv = [headers.join(","), ...rows.map((row) => headers.map((h) => csvCell(row[h])).join(","))].join("\n");
   return new Response(`\uFEFF${csv}`, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": "attachment; filename=prospect-lieux-b2b.csv" } });
-}
-
-async function importRows(body: { password: string; table: string; rows: Record<string, unknown>[] }) {
-  if (body.password !== PASSWORD) throw new Error("Mot de passe import incorrect");
-  const conflicts: Record<string, string> = {
-    users: "id",
-    venues: "id",
-    commercial_data: "venue_id",
-    history: "id",
-    sync_runs: "id",
-    sync_progress: "id",
-    sync_step_status: "step_key"
-  };
-  if (!conflicts[body.table]) throw new Error("Table import invalide");
-  await restWrite(body.table, "POST", body.rows || [], "resolution=merge-duplicates,return=minimal", conflicts[body.table]);
-  return { imported: body.rows?.length || 0 };
 }
 
 async function allVenues() {
