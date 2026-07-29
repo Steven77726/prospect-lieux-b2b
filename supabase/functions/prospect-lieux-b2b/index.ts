@@ -10,7 +10,9 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/functions\/v1\/prospect-lieux-b2b/, "") || "/";
+  const path = url.pathname
+    .replace(/^\/functions\/v1\/prospect-lieux-b2b/, "")
+    .replace(/^\/prospect-lieux-b2b/, "") || "/";
 
   if (path === "/login" && req.method === "POST") return login(req);
   if (!isAuthorized(req)) return loginPage();
