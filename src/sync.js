@@ -11,6 +11,7 @@ import {
 const batchSize = 100;
 const miniLimit = 25;
 const pauseMs = 2500;
+const maxRunMs = 110000;
 
 const overpassEndpoints = [
   "https://overpass.private.coffee/api/interpreter",
@@ -93,9 +94,11 @@ export async function runVenueSync(options = {}) {
   const successfulSteps = [];
   const retrySteps = [];
   const stepSource = onlySteps || steps.slice(progress.currentStepIndex);
+  const startedAt = Date.now();
 
   for (const step of stepSource) {
     if (!onlySteps && newCount >= limit) break;
+    if (!onlySteps && Date.now() - startedAt > maxRunMs) break;
     const result = await runMiniStep(step, workingEndpoint);
     workingEndpoint = result.workingEndpoint || workingEndpoint;
     Object.assign(errorsByEndpoint, result.errorsByEndpoint);
