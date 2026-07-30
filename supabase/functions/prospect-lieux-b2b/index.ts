@@ -36,22 +36,33 @@ const zones = [
 ];
 
 const searchPlan = [
-  { key: "amenity", value: "restaurant", type: "Restaurant" },
   { key: "tourism", value: "hotel", type: "Hotel" },
+  { key: "building", value: "hotel", type: "Hotel" },
+  { key: "tourism", value: "hostel", type: "Hotel" },
+  { key: "tourism", value: "apartment", type: "Hotel" },
   { key: "amenity", value: "conference_centre", type: "Centre de conference" },
+  { key: "amenity", value: "exhibition_centre", type: "Centre de conference" },
+  { key: "name", value: "conference|conférence|congres|congrès|seminaire|séminaire|meeting", type: "Centre de conference", regex: true },
   { key: "room", value: "meeting", type: "Salle de reunion" },
   { key: "room", value: "conference", type: "Salle de reunion" },
   { key: "name", value: "auditorium", type: "Auditorium", regex: true },
   { key: "tourism", value: "museum", type: "Musee" },
   { key: "amenity", value: "arts_centre", type: "Centre culturel" },
   { key: "amenity", value: "community_centre", type: "Salle polyvalente" },
+  { key: "amenity", value: "public_building", type: "Salle polyvalente" },
+  { key: "building", value: "public", type: "Salle polyvalente" },
   { key: "name", value: "rooftop", type: "Rooftop", regex: true },
   { key: "amenity", value: "events_venue", type: "Lieu de reception" },
-  { key: "name", value: "reception|réception|seminaire|séminaire", type: "Lieu de reception", regex: true },
+  { key: "name", value: "reception|réception|seminaire|séminaire|événement|evenement|event|salons?", type: "Lieu de reception", regex: true },
   { key: "amenity", value: "coworking_space", type: "Coworking" },
+  { key: "office", value: "coworking", type: "Coworking" },
   { key: "amenity", value: "theatre", type: "Theatre" },
+  { key: "amenity", value: "cinema", type: "Auditorium" },
+  { key: "amenity", value: "music_venue", type: "Lieu de reception" },
+  { key: "leisure", value: "dance", type: "Lieu de reception" },
   { key: "tourism", value: "gallery", type: "Galerie" },
-  { key: "name", value: "loft|atypique", type: "Espace atypique", regex: true }
+  { key: "shop", value: "art", type: "Galerie" },
+  { key: "name", value: "loft|atypique|showroom|studio|terrasse|penthouse|privatisation|privatisable|salon", type: "Espace atypique", regex: true }
 ];
 
 const steps = zones.flatMap((zone) => searchPlan.map((search) => ({
@@ -410,7 +421,7 @@ async function runVenueSync(options = {}) {
 
 function runTargetedSync() {
   const zone = zones.find((item) => item.name === "Paris 8e");
-  const wanted = new Set(["Hotel", "Centre de conference", "Restaurant"]);
+  const wanted = new Set(["Hotel", "Centre de conference", "Auditorium", "Lieu de reception", "Espace atypique"]);
   const targeted = searchPlan
     .filter((search) => wanted.has(search.type))
     .map((search) => ({ zone, search, key: `test::${zone.name}::${search.type}::${search.key}::${search.value}` }));
@@ -427,7 +438,9 @@ async function runMiniStep(step, preferredEndpoint) {
   for (const endpoint of endpoints) {
     try {
       const elements = await fetchOverpassEndpoint(endpoint, query);
-      const candidates = elements.filter((element) => element.tags?.name).map((element) => mapOsmElement(element, step));
+      const candidates = elements
+        .filter((element) => element.tags?.name && !isFoodService(element.tags))
+        .map((element) => mapOsmElement(element, step));
       return { ok: true, candidates, workingEndpoint: endpoint, errorsByEndpoint };
     } catch (error) {
       errorsByEndpoint[endpoint] = error.message;
@@ -440,6 +453,9 @@ async function runMiniStep(step, preferredEndpoint) {
 function buildOverpassQuery(step) {
   const { zone, search } = step;
   const selector = search.regex ? `["${search.key}"~"${search.value}",i]` : `["${search.key}"="${search.value}"]`;
+  if (search.geometry === "all") {
+    return `[out:json][timeout:20];(node${selector}(${zone.bbox});way${selector}(${zone.bbox});relation${selector}(${zone.bbox}););out center ${miniLimit};`;
+  }
   return `[out:json][timeout:20];node${selector}(${zone.bbox});out tags ${miniLimit};`;
 }
 
@@ -711,6 +727,11 @@ function readCapacity(tags) {
   const raw = tags.capacity || tags["capacity:persons"] || tags.seats || "";
   const value = Number(String(raw).match(/\d+/)?.[0] || 0);
   return value || null;
+}
+
+function isFoodService(tags = {}) {
+  const foodAmenities = new Set(["restaurant", "cafe", "bar", "pub", "fast_food", "food_court", "biergarten"]);
+  return foodAmenities.has(String(tags.amenity || "").toLowerCase());
 }
 
 function formatEndpointErrors(errorsByEndpoint) {
