@@ -3,8 +3,9 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const batchSize = 100;
 const miniLimit = 25;
-const pauseMs = 2500;
-const maxRunMs = 110000;
+const pauseMs = 1500;
+const overpassTimeoutMs = 12000;
+const maxRunMs = 65000;
 
 const overpassEndpoints = [
   "https://overpass.private.coffee/api/interpreter",
@@ -470,7 +471,7 @@ async function fetchOverpassEndpoint(endpoint, query) {
       "User-Agent": "Prospect-Lieux-B2B/1.0 (Supabase Edge Function; 25-result mini batch)"
     },
     body: new URLSearchParams({ data: query }).toString(),
-    signal: AbortSignal.timeout(25000)
+    signal: AbortSignal.timeout(overpassTimeoutMs)
   });
 
   if (!response.ok) {
